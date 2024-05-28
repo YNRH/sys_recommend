@@ -65,7 +65,7 @@ INSERT INTO movies (title, description, release_date) VALUES
 ('12 Angry Men', 'A jury deliberates the fate of a young man accused of murdering his father in this classic courtroom drama.', '1957-04-11'),
 ('Fight Club', 'An insomniac office worker and a devil-may-care soap maker form an underground fight club that evolves into something much, much more.', '1999-10-15'),
 ('Forrest Gump', 'The life of Forrest Gump, a small-town Alabama man with an IQ of 75, is chronicled through decades of American history.', '1994-06-11'),
-('The Matrix', 'A computer hacker learns that the world he lives in is actually a computer simulation and he is responsible for liberating humanity from the machines.', '1999-03-31'),
+('The Matrix', 'A computer hacker learns that the world he lives in is actually a computer simulation and he is responsible for liberating humanity from the machines.', '1999-03-31');
 
 
 --('aa1', 'A', '1999-03-31'),

@@ -123,4 +123,4 @@ def recommend_movie(user_id: int):
     # Combinar y priorizar recomendaciones
     combined_recommendations = list(set(collab_recommendations + content_recommendations + svm_recommendations))
 
-    return combined_recommendations[:2]  # Limitar a las 10 principales recomendaciones
+    return combined_recommendations[:10]  # Limitar a las 10 principales recomendaciones
