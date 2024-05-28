@@ -1,0 +1,79 @@
+/* vote/static/stylesheets/style.css */
+@import url(//fonts.googleapis.com/css?family=Open+Sans:400,700,600);
+
+*{
+  box-sizing:border-box;
+}
+
+#content-container-center {
+  text-align: center;
+}
+
+.movie {
+  margin: 10px;
+  padding: 12px 5px;
+  width: 200px;
+  display: inline-block;
+  border: 1px solid #ccc; /* Añade un borde sólido */
+  box-shadow: 2px 2px 5px rgba(68, 138, 114, 0.3); /* Añade sombra */
+}
+
+.movie h4 {
+  font-size: 22px;
+}
+h1{
+  font-size: 25px;
+}
+h1 span{
+  color: rgba(197, 185, 23, 0.925);
+}
+
+.rating-buttons {
+  display: flex;
+  justify-content: center;
+}
+
+.rating-button {
+  margin: 0 4px;
+  padding: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 50%;
+  background-color: #52987cec;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.rating-button:hover, #submit-btn:hover {
+  background-color: #306751ef;
+}
+
+#tip {
+  margin-top: 20px;
+  font-style: italic;
+}
+
+#hostname {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.selected {
+  background-color: #3c82bbea;
+  color: #fff;
+}
+
+.enviar-rating button {
+  margin: 20px;
+  padding: 10px 30px;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  border-radius: 5px;
+  background-color: #488d71ec;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}

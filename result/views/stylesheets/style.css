@@ -1,0 +1,52 @@
+@import url(//fonts.googleapis.com/css?family=Open+Sans:400,700,600);
+
+*{
+  box-sizing:border-box;
+}
+html,body{
+  margin:0;
+  padding:0;
+  height:100%;
+  font-family: 'Open Sans';
+}
+body{
+  opacity:0;
+  transition: all 1s linear;
+}
+
+#content-container {
+  padding: 20px;
+}
+
+#content-container-center {
+  text-align: center;
+}
+
+.subtitle {
+  margin-top: 20px;
+  font-weight: bold;
+  border-bottom: 2px solid #3b8168ca;
+}
+
+h2 {
+  color: rgba(20, 97, 62, 0.858);
+}
+
+.movie {
+  margin: 10px;
+  padding: 12px 5px;
+  width: 200px;
+  display: inline-block;
+  border: 1px solid #ccc; /* Añade un borde sólido */
+  box-shadow: 2px 2px 5px rgba(68, 138, 114, 0.3);
+}
+
+.label {
+  flex: 1;
+  font-weight: bold;
+}
+
+.stat {
+  margin-left: 20px;
+}
+
