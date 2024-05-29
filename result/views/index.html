@@ -35,9 +35,11 @@
         <h2>Películas Recomendadas</h2><span>{{total_recomendadas}}</span>
         <div id="content-container-center">
           <div id="choice">
-            <div class="movie" ng-repeat="recomendacion in recomendaciones">
-              <div class="label">{{recomendacion[0]}}</div>
-              <div class="stat">{{recomendacion[1]}}</div>
+            <div class="movie" ng-if="recomendacion">
+              <h4>{{recomendacion.title}}</h4>
+              <div class="stat">{{recomendacion.description}}</div>
+              <div class="stat">Fecha de lanzamiento: {{recomendacion.release_date}}</div>
+              <div class="stat"><a href="{{recomendacion.video_url}}" target="_blank">Ver video</a></div>
             </div>
           </div>
         </div>

@@ -38,8 +38,9 @@ app.controller("moviesController", function ($scope, $http) {
       .get("http://localhost:5002/recommend/" + $scope.cookie_id)
       .then(function (response) {
         console.log("Datos de respuesta de la API:", response.data);
-        $scope.recomendaciones = response.data;
-        $scope.total_recomendadas = response.data.length;
+        if (response.data.length > 0) {
+          $scope.recomendacion = response.data[0];  // Tomar solo la primera recomendación
+        }
       })
       .catch(function (error) {
         console.log("Error al obtener recomendaciones:", error);

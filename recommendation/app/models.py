@@ -17,6 +17,8 @@ class Movie(Base):
     title = Column(String(100), unique=True)
     description = Column(Text)
     release_date = Column(Date)
+    video_url = Column(String(100))
+    cluster_id = Column(Integer)
     created_at = Column(TIMESTAMP)
 
 class Genre(Base):

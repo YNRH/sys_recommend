@@ -116,6 +116,7 @@ namespace Worker
                                         movie_id SERIAL PRIMARY KEY,
                                         title VARCHAR(100) NOT NULL,
                                         description TEXT,
+                                        cluster_id INT,
                                         release_date DATE,
                                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                                     );

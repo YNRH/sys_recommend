@@ -11,7 +11,7 @@ from .database import get_db
 # Preprocesamiento de datos
 def preprocess_movies(db: Session):
     movies = db.query(Movie).all()
-    descriptions = [movie.description for movie in movies]
+    descriptions = [movie.description or '' for movie in movies]  # Manejo de valores nulos
 
     # TF-IDF vectorización
     tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
@@ -22,7 +22,7 @@ def preprocess_movies(db: Session):
     movie_clusters = kmeans.fit_predict(tfidf_matrix)
 
     for movie, cluster in zip(movies, movie_clusters):
-        movie.cluster_id = cluster
+        movie.cluster_id = int(cluster)
         db.add(movie)
     db.commit()
 
@@ -38,11 +38,22 @@ def collaborative_filtering(db: Session, user_id: int):
     ratings_matrix = pd.pivot_table(pd.DataFrame([(r.user_id, r.movie_id, r.rating) for r in ratings], columns=["user_id", "movie_id", "rating"]),
                                     index='user_id', columns='movie_id', values='rating').fillna(0)
 
-    user_vector = ratings_matrix.loc[user_id].values
-    distances = ratings_matrix.apply(lambda row: np.sum(np.abs(row - user_vector)), axis=1)
-    similar_users = distances.nsmallest(10).index
-    similar_users_ratings = ratings_matrix.loc[similar_users]
+    if user_id not in ratings_matrix.index:
+        return []
 
+    user_index = ratings_matrix.index.get_loc(user_id)
+    user_vector = ratings_matrix.loc[user_id].values
+    similarity = cosine_similarity(ratings_matrix.values)
+
+    if similarity.shape[0] > 1:
+        similar_users = similarity[user_index].argsort()[::-1][1:11]
+    else:
+        similar_users = []
+
+    if not similar_users:
+        return []
+
+    similar_users_ratings = ratings_matrix.iloc[similar_users]
     recommendations = similar_users_ratings.mean().sort_values(ascending=False)
     watched_movies = [r.movie_id for r in user_ratings]
 
@@ -54,17 +65,18 @@ def content_based_filtering(db: Session, user_id: int, tfidf_matrix, movie_clust
     liked_movies = [rating.movie_id for rating in user_ratings if rating.rating > 3.5]
     
     if not liked_movies:
-        return []
+        return []  # Retorna una lista vacía o recomendaciones generales
 
-    liked_movie_indices = [idx for idx, movie in enumerate(db.query(Movie).all()) if movie.movie_id in liked_movies]
+    movies = db.query(Movie).all()
+    liked_movie_indices = [idx for idx, movie in enumerate(movies) if movie.movie_id in liked_movies]
     liked_movie_clusters = [movie_clusters[idx] for idx in liked_movie_indices]
     
-    similar_movies = []
+    similar_movies = set()
     for cluster in liked_movie_clusters:
-        similar_movies += [movie.movie_id for idx, movie in enumerate(db.query(Movie).all()) if movie_clusters[idx] == cluster]
+        similar_movies.update([movie.movie_id for idx, movie in enumerate(movies) if movie_clusters[idx] == cluster])
 
     similarity_matrix = cosine_similarity(tfidf_matrix)
-    similar_movie_indices = [idx for idx, movie in enumerate(db.query(Movie).all()) if movie.movie_id in similar_movies]
+    similar_movie_indices = [idx for idx, movie in enumerate(movies) if movie.movie_id in similar_movies]
 
     movie_scores = {}
     for idx in liked_movie_indices:
@@ -73,7 +85,7 @@ def content_based_filtering(db: Session, user_id: int, tfidf_matrix, movie_clust
                 movie_scores[sim_idx] = similarity_matrix[idx, sim_idx]
 
     movie_scores = sorted(movie_scores.items(), key=lambda item: item[1], reverse=True)
-    return [db.query(Movie).all()[idx].movie_id for idx, _ in movie_scores[:10]]
+    return [movies[idx].movie_id for idx, _ in movie_scores[:10]]
 
 # Modelo de Predicción
 def svm_prediction(db: Session, user_id: int):
@@ -108,19 +120,27 @@ def svm_prediction(db: Session, user_id: int):
 def recommend_movie(user_id: int):
     db = next(get_db())
 
-    # Preprocesar películas
-    tfidf_matrix, movie_clusters = preprocess_movies(db)
+    try:
+        # Preprocesar películas
+        tfidf_matrix, movie_clusters = preprocess_movies(db)
 
-    # Filtrado colaborativo
-    collab_recommendations = collaborative_filtering(db, user_id)
+        # Filtrado colaborativo
+        collab_recommendations = collaborative_filtering(db, user_id)
 
-    # Filtrado basado en contenido
-    content_recommendations = content_based_filtering(db, user_id, tfidf_matrix, movie_clusters)
+        # Filtrado basado en contenido
+        content_recommendations = content_based_filtering(db, user_id, tfidf_matrix, movie_clusters)
 
-    # Modelo de predicción
-    svm_recommendations = svm_prediction(db, user_id)
+        # Modelo de predicción
+        svm_recommendations = svm_prediction(db, user_id)
 
-    # Combinar y priorizar recomendaciones
-    combined_recommendations = list(set(collab_recommendations + content_recommendations + svm_recommendations))
+        # Combinar y priorizar recomendaciones
+        combined_recommendations = list(set(collab_recommendations + content_recommendations + svm_recommendations))
 
-    return combined_recommendations[:10]  # Limitar a las 10 principales recomendaciones
+        top_recommendations = combined_recommendations[:4]  # Limitar a las 4 principales recomendaciones
+
+        # Obtener detalles de las películas recomendadas
+        recommended_movies = db.query(Movie).filter(Movie.movie_id.in_(top_recommendations)).all()
+        return [{"movie_id": movie.movie_id, "title": movie.title, "description": movie.description, "release_date": movie.release_date, "video_url": movie.video_url} for movie in recommended_movies]
+
+    finally:
+        db.close()
