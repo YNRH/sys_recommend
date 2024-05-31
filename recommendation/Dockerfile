@@ -27,7 +27,11 @@ FROM base AS final
 COPY . .
 
 # Make port 80 available for links and/or publish
+ENV PORT 80
 EXPOSE 80
 
 # Define our command to be run when launching the container
 CMD ["gunicorn", "wsgi:app", "-b", "0.0.0.0:80", "--log-file", "-", "--access-logfile", "-", "--workers", "4", "--keep-alive", "0"]
+
+# Agrega el HEALTHCHECK al final del Dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl --fail http://localhost:80/ || exit 1

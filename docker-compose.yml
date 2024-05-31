@@ -1,32 +1,15 @@
 services:
-  vote:
-    build:
-      context: ./vote
-      target: dev
-    depends_on:
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    volumes:
-      - ./vote:/usr/local/app
-    ports:
-      - "5000:80"
-    networks:
-      - front-tier
-      - back-tier
 
   result:
     build: ./result
     entrypoint: nodemon --inspect=0.0.0.0 server.js
     depends_on:
-      - db
-      - api
-      - redis
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
     environment:
       - API_URL=http://api:80
     volumes:
@@ -55,6 +38,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     ports:
       - "5002:80"
     networks:
@@ -67,6 +55,8 @@ services:
     healthcheck:
       test: /healthchecks/redis.sh
       interval: "5s"
+      timeout: 3s
+      retries: 3
     networks:
       - back-tier
 

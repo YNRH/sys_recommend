@@ -38,3 +38,8 @@ class Rating(Base):
     rating = Column(DECIMAL(2, 1))
     watched_duration = Column(Integer)
     created_at = Column(TIMESTAMP)
+
+class RecommendationCache(Base):
+    __tablename__ = 'recommendation_cache'
+    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    movie_id = Column(Integer, ForeignKey('movies.id'))

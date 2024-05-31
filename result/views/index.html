@@ -1,54 +1,39 @@
 <!DOCTYPE html>
 <html ng-app="moviesApp">
-  <head>
-    <meta charset="utf-8" />
-    <title>Movies Ratings - Result</title>
-    <base href="/index.html" />
-    <meta name="viewport" content="width=device-width, initial-scale = 1.0" />
-    <meta name="keywords" content="docker-compose, docker, stack" />
-    <meta name="author" content="Docker" />
-    <link rel="stylesheet" href="/stylesheets/style.css" />
-  </head>
-  <body ng-controller="moviesController">
-    <div id="content-container">
-      <h1>User ID: <span>{{cookie_id}}</span></h1>
-      <div id="result" class="subtitle">
-        <h2>Califica tus películas favoritas</h2>
-        <span>{{total}}</span>
-      </div>
-      <div id="content-container-center">
-        <div id="choice">
-          <form id="mov" name="form">
-            <div class="movie" ng-if="randomMovie">
-              <h4>{{ randomMovie.title }}</h4>
-              <div class="rating-buttons">
-                <button type="button" ng-repeat="n in [1,2,3,4,5]" name="{{ randomMovie.title }}" value="{{n}}" class="rating-button" ng-click="rateMovie(randomMovie.title, n)">{{n}}</button>
-              </div>
+<head>
+  <meta charset="utf-8" />
+  <title>Movies Ratings - Result</title>
+  <base href="/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/stylesheets/style.css" />
+</head>
+<body ng-controller="moviesController">
+  <div id="content-container">
+    <p class="user_id">User ID: <span>{{cookie_id}}</span></p>
+    <div id="result" class="subtitle">
+      <h1>Califica tus películas recomendadas</h1>
+    </div>
+    <div id="content-container-center">
+      <div id="choice">
+        <form id="mov" name="form">
+          <div class="movie" ng-if="recomendaciones.length">
+            <div class="video-container">
+              <iframe id="player" ng-src="{{ recomendaciones[0].video_url }}" frameborder="0" allowfullscreen></iframe>
             </div>
-            <div class="enviar-rating" ng-if="randomMovie">
-              <button type="button" id="submit-btn" ng-click="submitVotes()">Enviar</button>
-            </div>
-          </form>
-        </div>
-      </div>
-      <div id="recommendation" class="subtitle">
-        <h2>Películas Recomendadas</h2><span>{{total_recomendadas}}</span>
-        <div id="content-container-center">
-          <div id="choice">
-            <div class="movie" ng-if="recomendacion">
-              <h4>{{recomendacion.title}}</h4>
-              <div class="stat">{{recomendacion.description}}</div>
-              <div class="stat">Fecha de lanzamiento: {{recomendacion.release_date}}</div>
-              <div class="stat"><a href="{{recomendacion.video_url}}" target="_blank">Ver video</a></div>
+            <p class="title_movie">{{ recomendaciones[0].title }}</p>
+            <div class="rating-buttons">
+              <button type="button" ng-repeat="n in [1,2,3,4,5]" class="rating-button" ng-click="rateMovie(recomendaciones[0].title, n)">{{n}}</button>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
-
-    <script src="socket.io.js"></script>
-    <script src="angular.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="app.js"></script>
-  </body>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.14/angular.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.14/angular-sanitize.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="/app.js"></script>
+</body>
 </html>

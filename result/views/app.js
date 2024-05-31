@@ -1,70 +1,120 @@
-var app = angular.module("moviesApp", []);
+var app = angular.module("moviesApp", ['ngSanitize']);
 var socket = io.connect();
 
-app.controller("moviesController", function ($scope, $http) {
-  // Define API_URL
-  //$scope.API_URL = ;
+app.controller("moviesController", function ($scope, $http, $sce) {
+  let player;
+  let startTime = 0;
+  let watchedDuration = 0;
 
-  var init = function () {
+  function init() {
     document.body.style.opacity = 1;
-  };
+  }
+
   socket.on("message", function (data) {
     init();
   });
 
-  // Función para obtener la cookie "cookie_id" del navegador
   function getCookie(name) {
     var value = "; " + document.cookie;
     var parts = value.split("; " + name + "=");
     if (parts.length == 2) return parts.pop().split(";").shift();
   }
 
-  // Obtener el cookie_id
+  function setCookie(name, value, days) {
+    var expires = "";
+    if (days) {
+      var date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+  }
+
+  function generateTempCookieId() {
+    return 'temp' + Math.random().toString(36).substr(2, 9);
+  }
+
   $scope.cookie_id = getCookie("cookie_id");
 
-  // Obtener las películas aleatorias
-  $http
-    .get("/random-movie")
-    .then(function (response) {
-      $scope.randomMovie = response.data;
-    })
-    .catch(function (error) {
-      console.log("Error al obtener película aleatoria:", error);
-    });
-
-  // Obtener las recomendaciones para el usuario
-  if ($scope.cookie_id) {
-    $http
-      .get("http://localhost:5002/recommend/" + $scope.cookie_id)
-      .then(function (response) {
-        console.log("Datos de respuesta de la API:", response.data);
-        if (response.data.length > 0) {
-          $scope.recomendacion = response.data[0];  // Tomar solo la primera recomendación
-        }
-      })
-      .catch(function (error) {
-        console.log("Error al obtener recomendaciones:", error);
-      });
+  if (!$scope.cookie_id) {
+    $scope.cookie_id = generateTempCookieId();
+    setCookie("cookie_id", $scope.cookie_id, 1);
   }
 
   $scope.votes = {};
+  $scope.recomendaciones = [];
 
-  $scope.rateMovie = function (title, rating) {
-    $scope.votes[title] = rating;
-  };
-
-  $scope.submitVotes = function () {
-    if (Object.keys($scope.votes).length === 0) {
-      console.error('No votes to submit');
-      return;
+  async function fetchRecommendations() {
+    if ($scope.cookie_id) {
+      try {
+        const response = await $http.get(`http://localhost:5002/recommend/${$scope.cookie_id}`);
+        $scope.recomendaciones = [response.data];
+        $scope.recomendaciones.forEach(movie => {
+          movie.video_url = $sce.trustAsResourceUrl(movie.video_url.replace("youtu.be", "www.youtube.com/embed"));
+        });
+        onYouTubeIframeAPIReady();
+        console.log("Recomendación actualizada");
+      } catch (error) {
+        console.error('Error fetching recommendations: ', error);
+      } finally {
+        $scope.$apply();
+      }
     }
-    
-    $http.post('/submit-votes', { votes: $scope.votes })
-      .then(function (response) {
-        console.log('Votes submitted successfully');
-      })
-      .catch(function (error) {
-        console.error('Error submitting votes:', error);
-      });
+  }
+
+  
+
+  $scope.rateMovie = async function (title, rating) {
+    $scope.votes[title] = { rating: rating, watched_duration: watchedDuration };
+    console.log(`Rating submitted: ${title} - ${rating}, Watched Duration: ${watchedDuration} seconds`);
+
+    try {
+      await $http.post('/submit-votes', { votes: $scope.votes });
+      console.log('Votes submitted successfully');
+      $scope.votes = {};
+      watchedDuration = 0;
+      fetchRecommendations();
+    } catch (error) {
+      console.error('Error submitting votes:', error);
+    }
   };
+
+  fetchRecommendations();
+  window.onYouTubeIframeAPIReady = function() {
+    player = new YT.Player('player', {
+      events: {
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  }
+
+  function onPlayerStateChange(event) {
+    if (event.data == YT.PlayerState.PLAYING) {
+      if (!startTime) {
+        startTime = Date.now();
+      }
+      console.log('Video started playing');
+    } else if (event.data == YT.PlayerState.PAUSED || event.data == YT.PlayerState.ENDED) {
+      if (startTime) {
+        watchedDuration += Math.floor((Date.now() - startTime) / 1000);
+        console.log(`Video paused or ended. Watched Duration: ${watchedDuration} seconds`);
+        startTime = 0;
+      }
+    }
+  }
+  // Manejar la interrupción por actualización de página
+  window.addEventListener('beforeunload', function() {
+    if (startTime) {
+      watchedDuration += Math.floor((Date.now() - startTime) / 1000);
+      console.log(`Page is unloading. Watched Duration: ${watchedDuration} seconds`);
+      startTime = 0;
+    }
+  });
 });
+
+app.config(['$sceDelegateProvider', function($sceDelegateProvider) {
+  $sceDelegateProvider.resourceUrlWhitelist([
+    'self',
+    'https://www.youtube.com/**'
+  ]);
+}]);
